@@ -59,12 +59,20 @@ func SignToken(message, secret string) (string, error) {
 }
 
 func ValidateJWT(token string, secret string) (bool, error) {
+	revoked, err := IsTokenRevoked(token)
+	if err != nil {
+		return false, errors.New("error checking token blacklist")
+	}
+	if revoked {
+		return false, errors.New("token has been revoked")
+	}
+
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
 		return false, errors.New("invalid token format")
 	}
 
-	_, err := base64.RawURLEncoding.DecodeString(parts[0])
+	_, err = base64.RawURLEncoding.DecodeString(parts[0])
 	if err != nil {
 		return false, errors.New("couldn't decode header")
 	}

@@ -15,8 +15,6 @@ func main() {
 		return
 	}
 
-	fmt.Println("Encoded Header:", encodedHeader)
-
 	payload := jwt.JWTPayload{
 		Sub:  "1234567890",
 		Name: "John Doe",
@@ -46,11 +44,29 @@ func main() {
 
 	validated, err := jwt.ValidateJWT(token, secret)
 	if err != nil {
-		fmt.Println("\nError validating token")
+		fmt.Println("\nError validating token:", err)
 		return
 	}
 
 	if validated {
 		fmt.Println("\nValid token")
+	}
+
+	err = jwt.RevokeToken(token)
+	if err != nil {
+		fmt.Println("\nError revoking token:", err)
+		return
+	}
+
+	isRevoked, err := jwt.IsTokenRevoked(token)
+	if err != nil {
+		fmt.Println("\nError checking token blacklist:", err)
+		return
+	}
+
+	if isRevoked {
+		fmt.Println("\nToken is revoked and cannot be used anymore.")
+	} else {
+		fmt.Println("\nToken is NOT revoked.")
 	}
 }
