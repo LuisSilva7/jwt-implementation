@@ -42,6 +42,13 @@ func main() {
 	token := unsignedToken + "." + signature
 	fmt.Println("JWT Token:", token)
 
+	refreshToken, err := jwt.GenerateRefreshToken(payload.Sub, 604800) // 7 days
+	if err != nil {
+		fmt.Println("\nError generating refresh token:", err)
+		return
+	}
+	fmt.Println("\nGenerated Refresh Token:", refreshToken)
+
 	validated, err := jwt.ValidateJWT(token, secret)
 	if err != nil {
 		fmt.Println("\nError validating token:", err)
