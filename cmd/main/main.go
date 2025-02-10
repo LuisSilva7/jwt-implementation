@@ -49,6 +49,14 @@ func main() {
 	}
 	fmt.Println("\nGenerated Refresh Token:", refreshToken)
 
+	newToken, err := jwt.RefreshAccessToken(refreshToken, secret)
+	if err != nil {
+		fmt.Println("\nError refreshing access token:", err)
+		return
+	}
+
+	fmt.Println("\nNew JWT Token:", newToken)
+
 	validated, err := jwt.ValidateJWT(token, secret)
 	if err != nil {
 		fmt.Println("\nError validating token:", err)

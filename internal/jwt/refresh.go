@@ -85,3 +85,50 @@ func saveRefreshTokens(tokens map[string]RefreshToken) error {
 	encoder := json.NewEncoder(file)
 	return encoder.Encode(tokens)
 }
+
+func RefreshAccessToken(refreshToken, secret string) (string, error) {
+	refreshMu.Lock()
+	defer refreshMu.Unlock()
+
+	tokens, err := readRefreshTokens()
+	if err != nil {
+		return "", err
+	}
+
+	storedToken, exists := tokens[refreshToken]
+	if !exists {
+		return "", errors.New("invalid refresh token")
+	}
+
+	if storedToken.ExpiresAt < time.Now().Unix() {
+		delete(tokens, refreshToken)
+		saveRefreshTokens(tokens)
+		return "", errors.New("refresh token expired")
+	}
+
+	header := JWTHeader{Alg: "HS256", Typ: "JWT"}
+	encodedHeader, err := ToBase64URL(header)
+	if err != nil {
+		return "", err
+	}
+
+	payload := JWTPayload{
+		Sub:  storedToken.UserID,
+		Name: "User",
+		Iat:  int(time.Now().Unix()),
+		Exp:  int(time.Now().Unix()) + 3600,
+	}
+	encodedPayload, err := ToBase64URL(payload)
+	if err != nil {
+		return "", err
+	}
+
+	unsignedToken := encodedHeader + "." + encodedPayload
+
+	signature, err := SignToken(unsignedToken, secret)
+	if err != nil {
+		return "", err
+	}
+
+	return unsignedToken + "." + signature, nil
+}
